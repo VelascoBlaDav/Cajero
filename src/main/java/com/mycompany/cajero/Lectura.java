@@ -3,8 +3,6 @@ package com.mycompany.cajero;
 
 import java.util.Scanner;
 
-
-
 public class Lectura {
     public static String cadena(){
         Scanner sc = new Scanner (System.in);
