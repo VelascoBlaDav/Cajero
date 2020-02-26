@@ -1,10 +1,6 @@
 
 package com.mycompany.cajero;
 
-import static com.mycompany.cajero.Funciones.buscarCliente;
-import static com.mycompany.cajero.Funciones.ingresarDinero;
-import static com.mycompany.cajero.Funciones.sacarDinero;
-import static com.mycompany.cajero.Funciones.transferencia;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.EOFException;
@@ -15,50 +11,91 @@ import java.net.UnknownHostException;
 public class Cajero {
     public static void Main(String[] args) {
         int cuenta;
-        //Pedimos lo datos de la cuenta y llamamos a la funcion buscarCliente
-        //para comprobar si la cuenta existe
+        
         Socket s = null;
+        
     try{
         int serverPort = 8888;
         //Creo el socket para conectarme con el servidor
         s = new Socket("localhost", serverPort); 
         DataInputStream in = new DataInputStream( s.getInputStream());
-        DataOutputStream out =new DataOutputStream( s.getOutputStream());
+        DataOutputStream out = new DataOutputStream( s.getOutputStream());
         cuenta = Lectura.entero();
-        int opc, cantidad, cuenta2;
-        
-        System.out.println("\nBienvenido\n");
-        System.out.println("Seleccione una opcion:\n");
-        System.out.println("1) Consultar saldo:\n");
-        System.out.println("2) Sacar dinero:\n");
-        System.out.println("3) Ingresar dinero:\n");
-        System.out.println("4) Transferencia entre cuentas:\n");
-        System.out.println("5) Cambiar de cuenta:\n");
-        opc = Lectura.entero();
+        int opc, cantidad, cuenta2, cantidadCuenta;
+        String mensaje;
+        boolean confirmacion;
         
         do{
+            System.out.println("\nBienvenido\n");
+            System.out.println("Seleccione una opcion:\n");
+            System.out.println("1) Consultar saldo:\n");
+            System.out.println("2) Sacar dinero:\n");
+            System.out.println("3) Ingresar dinero:\n");
+            System.out.println("4) Transferencia entre cuentas:\n");
+            System.out.println("5) Cambiar de cuenta:\n");
+            opc = Lectura.entero();
+            confirmacion = false;
             switch(opc){
                 case 1:
                     //Envio la cuenta al cliente
                     out.writeInt(cuenta);  
                     //Recibo el mensaje del servidor
-                    String mensaje = in.readUTF();
+                    mensaje = in.readUTF();
                     System.out.println(mensaje);
                     
                     break;
                 case 2:
+                    //Pido la cantidad a sacar
                     cantidad = Lectura.entero();
-                    sacarDinero(cuenta, cantidad);
+                    //envio la cuenta
+                    out.writeInt(cuenta);
+                    mensaje = in.readUTF();
+                    cantidadCuenta = Integer.parseInt(mensaje);
+                    if((cantidadCuenta-cantidad)>0){
+                        out.writeInt(cantidadCuenta-cantidad);
+                    }else{
+                        System.out.println("Saldo insuficiente, ¿desea realizar la operacion?(1/0)");
+                        confirmacion = Lectura.booleanoNumerico();
+                        if(confirmacion == true){
+                            out.writeInt(cantidadCuenta-cantidad);
+                        }else{
+                            System.out.println("Operacion carcelada con exito");
+                        }
+                    }
                     break;
                 case 3:
-                    cantidad = Lectura.entero();
-                    ingresarDinero(cuenta, cantidad);
+                    
+                    do{
+                        //Pido la cantidad a ingresar 
+                        cantidad = Lectura.entero();
+                        //envio la cuenta
+                        out.writeInt(cuenta);
+                        mensaje = in.readUTF();
+                        cantidadCuenta = Integer.parseInt(mensaje);
+                        System.out.println("La cantidad a ingresar es esta: "+cantidad+" ¿Es correcta?(1/0)");
+                        confirmacion = Lectura.booleanoNumerico();
+                        if(confirmacion == true){
+                            out.writeInt(cantidadCuenta+cantidad);
+                        }
+                    }while(confirmacion != true);
                     break;
                 case 4:
+                    //Pido la cantidad a ingresar 
                     cantidad = Lectura.entero();
+                    //Pido la cuenta a ingresar el dinero
                     cuenta2 = Lectura.entero();
-                    cuenta2 = buscarCliente(cuenta2);
-                    transferencia(cuenta, cantidad, cuenta2);
+                    //envio la cuenta
+                    out.writeInt(cuenta);
+                    mensaje = in.readUTF();
+                    cantidadCuenta = Integer.parseInt(mensaje);
+                    if((cantidadCuenta-cantidad)>0){
+                        out.write(cuenta2);
+                        out.write(cantidad);
+                        mensaje = in.readUTF();
+                        System.out.println(mensaje);
+                    }else{
+                        System.out.println("Operacion invalida, saldo insuficiente");
+                    }
                     break;
                 case 5:
                     cuenta = Lectura.entero();
@@ -67,12 +104,6 @@ public class Cajero {
                     break;
             }
         }while(opc!=0);
-        
-        //Envio la cuenta al cliente
-        out.writeInt(cuenta);  
-        //Recibo el mensaje del servidor
-        String mensaje = in.readUTF();
-        System.out.println(mensaje);
         //Termino el servicio del cliente
         s.close();
     }catch (UnknownHostException e){System.out.println("Socket:"+e.getMessage());
