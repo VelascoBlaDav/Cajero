@@ -86,26 +86,19 @@ public class Cajero {
     }
         
     /*PASO DE MENSAJES*/
-    private static void pasarDatos(int opcion,int cuenta,int total,DataOutputStream out){
-        try {
-            //Genero una cadena con los datos a enviar
-            String mensaje = opcion+";"+cuenta+";"+(total);
-            //Envio la cadena
-            out.writeUTF(mensaje);
-        }catch(IOException e){
-            e.printStackTrace();
-        }  
+    private static void pasarDatos(int opcion,int cuenta,int total,DataOutputStream out) throws IOException{
+        //Genero una cadena con los datos a enviar
+        String mensaje = opcion+";"+cuenta+";"+(total);
+        //Envio la cadena
+        out.writeUTF(mensaje);
+        
     }
 
-    private static void pasarDatos(int opcion,int cuenta,DataOutputStream out){
-            try {
-                //Genero una cadena con los datos a enviar
-                String mensaje = opcion+";"+cuenta+";0";
-                //Envio la cadena
-                out.writeUTF(mensaje);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }  
+    private static void pasarDatos(int opcion,int cuenta,DataOutputStream out) throws IOException{
+        //Genero una cadena con los datos a enviar
+        String mensaje = opcion+";"+cuenta;
+        //Envio la cadena
+        out.writeUTF(mensaje);
     }
     
      /*BUSQUEDA DE CUENTA*/
@@ -135,8 +128,10 @@ public class Cajero {
         //Llamo a la funcion pasarDatos
         pasarDatos(1,cuenta,out);
         //Guardo los datos recibidos en variables
-        int saldo = in.readInt();
-        boolean result=in.readBoolean();
+        String data = in.readUTF();
+        String[] datos =data.split(";");
+        int saldo = Integer.parseInt(datos[0]);
+        boolean result = Boolean.valueOf(datos[1]);
         //Hago la comprobacion de que el saldo se ha podido comprobar correctamente
         if (result==true){
            //Si se ha podido comprobar muestro el saldo y devuelvo verdadero
@@ -154,7 +149,10 @@ public class Cajero {
         //Llamo a la funcion pasarDatos
         pasarDatos(1,cuenta,out);
         //Guardo el dato recibido en cantidadCuenta
-        int cantidadCuenta = in.readInt();
+        String data = in.readUTF();
+        String[] datos =data.split(";");
+        int cantidadCuenta = Integer.parseInt(datos[0]);
+        boolean result = Boolean.valueOf(datos[1]);
         //Compruebo que la cantidad total es mayor que 0
         if((cantidadCuenta-cantidad)>0){
             //Si es mayor que 0 llamo a la funcion pasarDatos y envio los datos al servidor
@@ -181,9 +179,12 @@ public class Cajero {
         //Llamo a la funcion pasarDatos
         pasarDatos(1,cuenta,out);
         //Guardo el dato recibido en cantidadCuenta
-        int cantidadCuenta = in.readInt();
+        String data = in.readUTF();
+        String[] datos =data.split(";");
+        int cantidadCuenta = Integer.parseInt(datos[0]);
+        boolean result = Boolean.valueOf(datos[1]);
         //Si el total es mayor que cero 
-        if((cantidadCuenta+cantidad)>0){
+        if((cantidad)>0){
             //Pido una confirmacion
             System.out.println("La cantidad a ingresar es esta: "+cantidad+" ¿Es correcta?(1/0)");
             boolean confirmacion = Lectura.booleanoNumerico();
@@ -207,7 +208,11 @@ public class Cajero {
     //Transferir dinero a otra cuenta
     private static boolean tranferirDinero(int cuenta, int cuenta2, int cantidad, DataInputStream in, DataOutputStream out) throws IOException{
         //Guardo el dato recibido en cantidadCuenta
-        int cantidadCuenta = in.readInt();
+        String data = in.readUTF();
+        String[] datos =data.split(";");
+        int cantidadCuenta = Integer.parseInt(datos[0]);
+        boolean result = Boolean.valueOf(datos[1]);
+        
         //Si la cantidad total es mayor que 0
         if((cantidadCuenta-cantidad)>0){
             //Saco el dinero de la primera cuenta y lo ingreso en la segunda cuenta
