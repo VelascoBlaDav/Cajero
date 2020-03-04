@@ -73,6 +73,8 @@ public class Cajero {
                         break;
                     case 0:
                         System.out.println("\nMuchas gracias\nQue tenga un buen dia\n");
+                        String mensaje = "5;"+cuenta;
+                        out.writeUTF(mensaje);
                         //Al ser la opc = 0 se sale del programa
                         break;
                 }
