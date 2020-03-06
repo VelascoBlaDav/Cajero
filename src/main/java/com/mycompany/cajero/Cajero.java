@@ -9,7 +9,7 @@ import java.net.UnknownHostException;
 
 
 public class Cajero {
-    public static void Main(String[] args) {
+    public static void main(String[] args) {
         int cuenta;       
         Socket s = null;
         
