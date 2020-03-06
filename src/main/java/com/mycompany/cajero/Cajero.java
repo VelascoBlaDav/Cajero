@@ -12,7 +12,7 @@ public class Cajero {
     public static void main(String[] args) {
         int cuenta;       
         Socket s = null;
-        System.out.println("Hola");
+
         //Hago un try-catch-finally para el control de excepciones
         try{
             int serverPort = 8888;
@@ -21,61 +21,65 @@ public class Cajero {
             //Genero el DataInput y el DataOutput con el socket que cree antes 
             DataInputStream in = new DataInputStream(s.getInputStream());
             DataOutputStream out = new DataOutputStream(s.getOutputStream());
+            int opc;
             
-            //Pido el numero de cuenta y compruebo que existe el numero antes de mostrar el menu simulando un logueo
-            System.out.println("\nBienvenido al cajero\n");
-            System.out.println("Escriba el numero de cuenta:\n");
-            cuenta = Lectura.entero();
-            buscarCuenta(cuenta, in, out);
-            int opc, cantidad, cuenta2;
-            //Inicio el bucle para el menu
+            System.out.println("Esperando respuesta del servidor...\n");
             do{
-                System.out.println("Seleccione una opcion:\n");
-                System.out.println("1) Consultar saldo:\n");
-                System.out.println("2) Sacar dinero:\n");
-                System.out.println("3) Ingresar dinero:\n");
-                System.out.println("4) Transferencia entre cuentas:\n");
-                System.out.println("5) Cambiar de cuenta:\n");
-                System.out.println("0) Salir:\n");
-                opc = Lectura.entero();
-                switch(opc){
-                    case 1:
-                        //Llamo a la funcion mostrarDinero para consultar el saldo disponible
-                        mostrarDinero(cuenta, in, out);
-                        break;
-                    case 2:
-                        //Pido la cantidad a sacar
-                        System.out.println("Escribe la cantidad a extraer:\n");
-                        cantidad = Lectura.entero();
-                        //Llamo a la funcion sacarDinero
-                        sacarDinero(cuenta, cantidad, in, out);
-                        break;
-                    case 3:
-                        //Pido la cantidad a sacar
-                        System.out.println("Escribe la cantidad a extraer:\n");
-                        cantidad = Lectura.entero();
-                        //Llamo a la funcion ingresarDinero
-                        ingresarDinero(cuenta, cantidad, in, out);
-                        break;
-                    case 4:
-                        //Pido la cantidad a ingresar 
-                        cantidad = Lectura.entero();
-                        //Pido la cuenta a la que ingresar el dinero
-                        cuenta2 = Lectura.entero();
-                        //Llamo a la funcion transferirDinero
-                        tranferirDinero(cuenta, cuenta2, cantidad, in, out);
-                        break;
-                    case 5:
-                        //Pido el numero de cuenta y compruebo que existe
-                        cuenta = Lectura.entero();
-                        buscarCuenta(cuenta, in, out);
-                        break;
-                    case 0:
-                        System.out.println("\nMuchas gracias\nQue tenga un buen dia\n");
-                        pasarDatos(opc, cuenta, out);
-                        //Al ser la opc = 0 se sale del programa
-                        break;
-                }
+                //Pido el numero de cuenta y compruebo que existe el numero antes de mostrar el menu simulando un logueo
+                System.out.println("\nBienvenido al cajero\n");
+                System.out.println("Escriba el numero de cuenta:\n");
+                cuenta = Lectura.entero();
+                buscarCuenta(cuenta, in, out);
+                int cantidad, cuenta2;
+                //Inicio el bucle para el menu
+                do{
+                    System.out.println("Seleccione una opcion:\n");
+                    System.out.println("1) Consultar saldo:\n");
+                    System.out.println("2) Sacar dinero:\n");
+                    System.out.println("3) Ingresar dinero:\n");
+                    System.out.println("4) Transferencia entre cuentas:\n");
+                    System.out.println("5) Cambiar de cuenta:\n");
+                    System.out.println("0) Salir:\n");
+                    opc = Lectura.entero();
+                    switch(opc){
+                        case 1:
+                            //Llamo a la funcion mostrarDinero para consultar el saldo disponible
+                            mostrarDinero(cuenta, in, out);
+                            break;
+                        case 2:
+                            //Pido la cantidad a sacar
+                            System.out.println("Escribe la cantidad a extraer:\n");
+                            cantidad = Lectura.entero();
+                            //Llamo a la funcion sacarDinero
+                            sacarDinero(cuenta, cantidad, in, out);
+                            break;
+                        case 3:
+                            //Pido la cantidad a sacar
+                            System.out.println("Escribe la cantidad a extraer:\n");
+                            cantidad = Lectura.entero();
+                            //Llamo a la funcion ingresarDinero
+                            ingresarDinero(cuenta, cantidad, in, out);
+                            break;
+                        case 4:
+                            //Pido la cantidad a ingresar 
+                            cantidad = Lectura.entero();
+                            //Pido la cuenta a la que ingresar el dinero
+                            cuenta2 = Lectura.entero();
+                            //Llamo a la funcion transferirDinero
+                            tranferirDinero(cuenta, cuenta2, cantidad, in, out);
+                            break;
+                        case 5:
+                            //Pido el numero de cuenta y compruebo que existe
+                            cuenta = Lectura.entero();
+                            buscarCuenta(cuenta, in, out);
+                            break;
+                        case 0:
+                            System.out.println("\nMuchas gracias\nQue tenga un buen dia\n");
+                            pasarDatos(opc, cuenta, out);
+                            //Al ser la opc = 0 se sale del programa
+                            break;
+                    }
+                }while(opc!=0);
             }while(opc!=0);
             //Termino el servicio del cliente y cierro el shocket
             s.close();
@@ -122,13 +126,21 @@ public class Cajero {
     
     /*BLOQUEO DE CUENTA*/
     
-    private static void bloquearCuenta(int cuenta,DataOutputStream out) throws IOException{
+    private static void bloquearCuenta(int cuenta, DataInputStream in, DataOutputStream out) throws IOException{
         pasarDatos(3,cuenta,out);
+        boolean result = in.readBoolean();
+        if(result == false){
+            System.out.println("Error del servidor\n");
+        }
     }
     /*DESBLOQUEO DE CUENTA*/
     
-    private static void desbloquearCuenta(int cuenta,DataOutputStream out) throws IOException{
+    private static void desbloquearCuenta(int cuenta,DataInputStream in, DataOutputStream out) throws IOException{
         pasarDatos(4,cuenta,out);
+        boolean result = in.readBoolean();
+        if(result == false){
+            System.out.println("Error del servidor\n");
+        }
     }
 
     /*FUNCIONES DEL MENU*/
@@ -171,10 +183,10 @@ public class Cajero {
         }else{
             //Compruebo que la cantidad total es mayor que 0
             if((cantidadCuenta-cantidad)>0){
-                bloquearCuenta(cuenta, out);
+                bloquearCuenta(cuenta, in, out);
                 //Si es mayor que 0 llamo a la funcion pasarDatos y envio los datos al servidor
                 pasarDatos(2, cuenta, cantidadCuenta-cantidad, out);
-                desbloquearCuenta(cuenta, out);
+                desbloquearCuenta(cuenta, in, out);
                 return true;
             }else{
                 //Si es menor que 0 muestro un mensaje de error y pregunto si quiere continuar con la operacion
@@ -182,9 +194,9 @@ public class Cajero {
                 boolean confirmacion = Lectura.booleanoNumerico();
                 if(confirmacion == true){
                     //Si hay confirmacion paso los datos
-                    bloquearCuenta(cuenta, out);
+                    bloquearCuenta(cuenta,in,out);
                     pasarDatos(2, cuenta, cantidadCuenta-cantidad, out);
-                    desbloquearCuenta(cuenta, out);
+                    desbloquearCuenta(cuenta,in,out);
                     return true;
                 }else{
                     //Sino muestro un mensaje
@@ -215,10 +227,10 @@ public class Cajero {
                 boolean confirmacion = Lectura.booleanoNumerico();
                 //Si se confirma
                 if(confirmacion == true){
-                    bloquearCuenta(cuenta, out);
+                    bloquearCuenta(cuenta,in,out);
                     //Llamo a la funcion pasarDatos
                     pasarDatos(3, cuenta, cantidadCuenta+cantidad, out);
-                    desbloquearCuenta(cuenta, out);
+                    desbloquearCuenta(cuenta,in,out);
                     return true;
                 }else{
                     //Sino se confirmo devuelvo un mensaje de error
