@@ -1,4 +1,3 @@
-
 package com.mycompany.cajero;
 
 import java.io.DataInputStream;
