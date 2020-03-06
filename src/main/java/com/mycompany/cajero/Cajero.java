@@ -12,7 +12,7 @@ public class Cajero {
     public static void main(String[] args) {
         int cuenta;       
         Socket s = null;
-        
+        System.out.println("Hola");
         //Hago un try-catch-finally para el control de excepciones
         try{
             int serverPort = 8888;
@@ -150,7 +150,8 @@ public class Cajero {
             return true;
         }else{
             //Si no se ha podido comprobar mando un mensaje de error y devuelvo falso
-            System.out.println("Error al consultal el saldo/n");
+            System.out.println("Error del servidor\n");
+            System.out.println("Error al consultal el saldo\n");
             return false;
         }
     }
@@ -164,27 +165,32 @@ public class Cajero {
         String[] datos =data.split(";");
         int cantidadCuenta = Integer.parseInt(datos[0]);
         boolean result = Boolean.valueOf(datos[1]);
-        //Compruebo que la cantidad total es mayor que 0
-        if((cantidadCuenta-cantidad)>0){
-            bloquearCuenta(cuenta, out);
-            //Si es mayor que 0 llamo a la funcion pasarDatos y envio los datos al servidor
-            pasarDatos(2, cuenta, cantidadCuenta-cantidad, out);
-            desbloquearCuenta(cuenta, out);
-            return true;
+        if(result == false){
+            System.out.println("Error del servidor\n");
+            return result;
         }else{
-            //Si es menor que 0 muestro un mensaje de error y pregunto si quiere continuar con la operacion
-            System.out.println("Saldo insuficiente, ¿desea realizar la operacion?(1/0)");
-            boolean confirmacion = Lectura.booleanoNumerico();
-            if(confirmacion == true){
-                //Si hay confirmacion paso los datos
+            //Compruebo que la cantidad total es mayor que 0
+            if((cantidadCuenta-cantidad)>0){
                 bloquearCuenta(cuenta, out);
+                //Si es mayor que 0 llamo a la funcion pasarDatos y envio los datos al servidor
                 pasarDatos(2, cuenta, cantidadCuenta-cantidad, out);
                 desbloquearCuenta(cuenta, out);
                 return true;
             }else{
-                //Sino muestro un mensaje
-                System.out.println("Operacion carcelada con exito");
-                return false;
+                //Si es menor que 0 muestro un mensaje de error y pregunto si quiere continuar con la operacion
+                System.out.println("Saldo insuficiente, ¿desea realizar la operacion?(1/0)");
+                boolean confirmacion = Lectura.booleanoNumerico();
+                if(confirmacion == true){
+                    //Si hay confirmacion paso los datos
+                    bloquearCuenta(cuenta, out);
+                    pasarDatos(2, cuenta, cantidadCuenta-cantidad, out);
+                    desbloquearCuenta(cuenta, out);
+                    return true;
+                }else{
+                    //Sino muestro un mensaje
+                    System.out.println("Operacion carcelada con exito");
+                    return false;
+                }
             }
         }
     }
@@ -198,28 +204,33 @@ public class Cajero {
         String[] datos =data.split(";");
         int cantidadCuenta = Integer.parseInt(datos[0]);
         boolean result = Boolean.valueOf(datos[1]);
-        //Si el total es mayor que cero 
-        if((cantidadCuenta+cantidad)>0){
-            //Pido una confirmacion
-            System.out.println("La cantidad a ingresar es esta: "+cantidad+" ¿Es correcta?(1/0)");
-            boolean confirmacion = Lectura.booleanoNumerico();
-            //Si se confirma
-            if(confirmacion == true){
-                bloquearCuenta(cuenta, out);
-                //Llamo a la funcion pasarDatos
-                pasarDatos(3, cuenta, cantidadCuenta+cantidad, out);
-                desbloquearCuenta(cuenta, out);
-                return true;
+        if(result == false){
+            System.out.println("Error del servidor\n");
+            return result;
+        }else{
+            //Si el total es mayor que cero 
+            if((cantidadCuenta+cantidad)>0){
+                //Pido una confirmacion
+                System.out.println("La cantidad a ingresar es esta: "+cantidad+" ¿Es correcta?(1/0)");
+                boolean confirmacion = Lectura.booleanoNumerico();
+                //Si se confirma
+                if(confirmacion == true){
+                    bloquearCuenta(cuenta, out);
+                    //Llamo a la funcion pasarDatos
+                    pasarDatos(3, cuenta, cantidadCuenta+cantidad, out);
+                    desbloquearCuenta(cuenta, out);
+                    return true;
+                }else{
+                    //Sino se confirmo devuelvo un mensaje de error
+                    System.out.println("Operacion carcelada\n");
+                    return false;
+                }
             }else{
-                //Sino se confirmo devuelvo un mensaje de error
-                System.out.println("Operacion carcelada\n");
+                //Sino muestro un mensaje de error
+                System.out.println("Imposible realizar esta operacion\nOperacion carcelada con exito");
                 return false;
             }
-        }else{
-            //Sino muestro un mensaje de error
-            System.out.println("Imposible realizar esta operacion\nOperacion carcelada con exito");
-            return false;
-        }        
+        }
     }
     
     //Transferir dinero a otra cuenta
@@ -229,16 +240,21 @@ public class Cajero {
         String[] datos =data.split(";");
         int cantidadCuenta = Integer.parseInt(datos[0]);
         boolean result = Boolean.valueOf(datos[1]);
-        //Si la cantidad total es mayor que 0
-        if((cantidadCuenta-cantidad)>0){
-            //Saco el dinero de la primera cuenta y lo ingreso en la segunda cuenta
-            sacarDinero(cuenta, cantidad, in, out);
-            ingresarDinero(cuenta2, cantidad, in, out);
-            return true;
+        if(result == false){
+            System.out.println("Error del servidor\n");
+            return result;
         }else{
-            //Devuelvo un mensaje de error
-            System.out.println("Operacion invalida, saldo insuficiente");
-            return false;
+            //Si la cantidad total es mayor que 0
+            if((cantidadCuenta-cantidad)>0){
+                //Saco el dinero de la primera cuenta y lo ingreso en la segunda cuenta
+                sacarDinero(cuenta, cantidad, in, out);
+                ingresarDinero(cuenta2, cantidad, in, out);
+                return true;
+            }else{
+                //Devuelvo un mensaje de error
+                System.out.println("Operacion invalida, saldo insuficiente");
+                return false;
+            }
         }
     }
     
