@@ -73,8 +73,7 @@ public class Cajero {
                         break;
                     case 0:
                         System.out.println("\nMuchas gracias\nQue tenga un buen dia\n");
-                        String mensaje = "5;"+cuenta;
-                        out.writeUTF(mensaje);
+                        pasarDatos(opc, cuenta, out);
                         //Al ser la opc = 0 se sale del programa
                         break;
                 }
@@ -89,11 +88,11 @@ public class Cajero {
         
     /*PASO DE MENSAJES*/
     private static void pasarDatos(int opcion,int cuenta,int total,DataOutputStream out) throws IOException{
+
         //Genero una cadena con los datos a enviar
         String mensaje = opcion+";"+cuenta+";"+(total);
         //Envio la cadena
         out.writeUTF(mensaje);
-        
     }
 
     private static void pasarDatos(int opcion,int cuenta,DataOutputStream out) throws IOException{
@@ -103,7 +102,7 @@ public class Cajero {
         out.writeUTF(mensaje);
     }
     
-     /*BUSQUEDA DE CUENTA*/
+    /*BUSQUEDA DE CUENTA*/
 
     private static boolean buscarCuenta(int cuenta,DataInputStream in,DataOutputStream out) throws IOException{
         pasarDatos(1,cuenta,out);
@@ -120,6 +119,17 @@ public class Cajero {
             System.out.println("Operación cancelada/n");
             return false;
         }
+    }
+    
+    /*BLOQUEO DE CUENTA*/
+    
+    private static void bloquearCuenta(int cuenta,DataOutputStream out) throws IOException{
+        pasarDatos(3,cuenta,out);
+    }
+    /*DESBLOQUEO DE CUENTA*/
+    
+    private static void desbloquearCuenta(int cuenta,DataOutputStream out) throws IOException{
+        pasarDatos(4,cuenta,out);
     }
 
     /*FUNCIONES DEL MENU*/
@@ -157,8 +167,10 @@ public class Cajero {
         boolean result = Boolean.valueOf(datos[1]);
         //Compruebo que la cantidad total es mayor que 0
         if((cantidadCuenta-cantidad)>0){
+            bloquearCuenta(cuenta, out);
             //Si es mayor que 0 llamo a la funcion pasarDatos y envio los datos al servidor
             pasarDatos(2, cuenta, cantidadCuenta-cantidad, out);
+            desbloquearCuenta(cuenta, out);
             return true;
         }else{
             //Si es menor que 0 muestro un mensaje de error y pregunto si quiere continuar con la operacion
@@ -166,7 +178,9 @@ public class Cajero {
             boolean confirmacion = Lectura.booleanoNumerico();
             if(confirmacion == true){
                 //Si hay confirmacion paso los datos
+                bloquearCuenta(cuenta, out);
                 pasarDatos(2, cuenta, cantidadCuenta-cantidad, out);
+                desbloquearCuenta(cuenta, out);
                 return true;
             }else{
                 //Sino muestro un mensaje
@@ -186,14 +200,16 @@ public class Cajero {
         int cantidadCuenta = Integer.parseInt(datos[0]);
         boolean result = Boolean.valueOf(datos[1]);
         //Si el total es mayor que cero 
-        if((cantidad)>0){
+        if((cantidadCuenta+cantidad)>0){
             //Pido una confirmacion
             System.out.println("La cantidad a ingresar es esta: "+cantidad+" ¿Es correcta?(1/0)");
             boolean confirmacion = Lectura.booleanoNumerico();
             //Si se confirma
             if(confirmacion == true){
+                bloquearCuenta(cuenta, out);
                 //Llamo a la funcion pasarDatos
                 pasarDatos(3, cuenta, cantidadCuenta+cantidad, out);
+                desbloquearCuenta(cuenta, out);
                 return true;
             }else{
                 //Sino se confirmo devuelvo un mensaje de error
@@ -214,7 +230,6 @@ public class Cajero {
         String[] datos =data.split(";");
         int cantidadCuenta = Integer.parseInt(datos[0]);
         boolean result = Boolean.valueOf(datos[1]);
-        
         //Si la cantidad total es mayor que 0
         if((cantidadCuenta-cantidad)>0){
             //Saco el dinero de la primera cuenta y lo ingreso en la segunda cuenta
@@ -229,3 +244,4 @@ public class Cajero {
     }
     
 }
+
