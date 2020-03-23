@@ -10,7 +10,7 @@ import java.net.UnknownHostException;
 
 public class Cajero {
     public static void main(String[] args) {
-        int cuenta;       
+        int cuenta = 0;       
         Socket s = null;
 
         //Hago un try-catch-finally para el control de excepciones
@@ -22,21 +22,18 @@ public class Cajero {
             DataInputStream in = new DataInputStream(s.getInputStream());
             DataOutputStream out = new DataOutputStream(s.getOutputStream());
             int opc;
-            Boolean ok;
+            Boolean ok=false;
             
             System.out.println("Esperando respuesta del servidor...\n");
             do{
                 //Pido el numero de cuenta y compruebo que existe el numero antes de mostrar el menu simulando un logueo
                 System.out.println("\nBienvenido al cajero\n");
-                System.out.println("Escriba el numero de cuenta:\n");
-                cuenta = Lectura.entero();
-                ok = buscarCuenta(cuenta, in, out);
-                while(ok==false){
+                while(ok!=true){
                     System.out.println("Escriba el numero de cuenta:\n");
                     cuenta = Lectura.entero();
                     ok = buscarCuenta(cuenta, in, out);
+                    comprobarBoolean(ok);
                 }
-                comprobarBoolean(ok);
                 int cantidad, cuenta2;
                 //Inicio el bucle para el menu
                 do{
@@ -47,6 +44,7 @@ public class Cajero {
                     System.out.println("4) Transferencia entre cuentas:\n");
                     System.out.println("5) Cambiar de cuenta:\n");
                     System.out.println("0) Salir:\n");
+                    
                     opc = Lectura.entero();
                     switch(opc){
                         case 1:
@@ -63,8 +61,8 @@ public class Cajero {
                             comprobarBoolean(ok);
                             break;
                         case 3:
-                            //Pido la cantidad a sacar
-                            System.out.println("Escribe la cantidad a extraer:\n");
+                            //Pido la cantidad a ingresar
+                            System.out.println("Escribe la cantidad a ingresar:\n");
                             cantidad = Lectura.entero();
                             //Llamo a la funcion ingresarDinero
                             ok = ingresarDinero(cuenta, cantidad, in, out);
@@ -81,6 +79,7 @@ public class Cajero {
                             break;
                         case 5:
                             //Pido el numero de cuenta y compruebo que existe
+                            System.out.println("Escriba el numero de cuenta:\n");
                             cuenta = Lectura.entero();
                             ok = buscarCuenta(cuenta, in, out);
                             while(ok==false){
@@ -126,9 +125,12 @@ public class Cajero {
     private static boolean buscarCuenta(int cuenta,DataInputStream in,DataOutputStream out) throws IOException{
         pasarDatos(1,cuenta,out);
 
-        boolean result=in.readBoolean();
+        String data = in.readUTF();
+        String[] datos =data.split(";");
+        int result = Integer.parseInt(datos[0]);
+        System.out.println(result);
         //Si la cuenta existe
-        if (result==true) {
+        if (result==0) {
             System.out.println("Bienvenido "+cuenta+"\n");
             return true;
             
@@ -145,7 +147,7 @@ public class Cajero {
     private static boolean bloquearCuenta(int cuenta, DataInputStream in, DataOutputStream out) throws IOException{
         pasarDatos(3,cuenta,out);
         int result = in.readInt();
-        if(result != 1){
+        if(result == 1){
             System.out.println("Error del servidor\n");
             return false;
         }
@@ -156,7 +158,7 @@ public class Cajero {
     private static boolean desbloquearCuenta(int cuenta,DataInputStream in, DataOutputStream out) throws IOException{
         pasarDatos(4,cuenta,out);
         int result = in.readInt();
-        if(result != 1){
+        if(result == 1){
             System.out.println("Error del servidor\n");
             return false;
         }
@@ -176,9 +178,9 @@ public class Cajero {
         int result = Integer.parseInt(datos[0]);
         int saldo = Integer.parseInt(datos[1]);
         //Hago la comprobacion de que el saldo se ha podido comprobar correctamente
-        if (result==0){
+        if (result == 0){
            //Si se ha podido comprobar muestro el saldo y devuelvo verdadero
-            System.out.println("Saldo actual: "+saldo+"/n");
+            System.out.println("Saldo actual: "+saldo+"\n");
             return true;
         }else{
             //Si no se ha podido comprobar mando un mensaje de error y devuelvo falso
