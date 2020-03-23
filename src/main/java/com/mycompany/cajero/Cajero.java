@@ -22,6 +22,7 @@ public class Cajero {
             DataInputStream in = new DataInputStream(s.getInputStream());
             DataOutputStream out = new DataOutputStream(s.getOutputStream());
             int opc;
+            Boolean ok;
             
             System.out.println("Esperando respuesta del servidor...\n");
             do{
@@ -29,7 +30,13 @@ public class Cajero {
                 System.out.println("\nBienvenido al cajero\n");
                 System.out.println("Escriba el numero de cuenta:\n");
                 cuenta = Lectura.entero();
-                buscarCuenta(cuenta, in, out);
+                ok = buscarCuenta(cuenta, in, out);
+                while(ok==false){
+                    System.out.println("Escriba el numero de cuenta:\n");
+                    cuenta = Lectura.entero();
+                    ok = buscarCuenta(cuenta, in, out);
+                }
+                comprobarBoolean(ok);
                 int cantidad, cuenta2;
                 //Inicio el bucle para el menu
                 do{
@@ -44,21 +51,24 @@ public class Cajero {
                     switch(opc){
                         case 1:
                             //Llamo a la funcion mostrarDinero para consultar el saldo disponible
-                            mostrarDinero(cuenta, in, out);
+                            ok = mostrarDinero(cuenta, in, out);
+                            comprobarBoolean(ok);
                             break;
                         case 2:
                             //Pido la cantidad a sacar
                             System.out.println("Escribe la cantidad a extraer:\n");
                             cantidad = Lectura.entero();
                             //Llamo a la funcion sacarDinero
-                            sacarDinero(cuenta, cantidad, in, out);
+                            ok = sacarDinero(cuenta, cantidad, in, out);
+                            comprobarBoolean(ok);
                             break;
                         case 3:
                             //Pido la cantidad a sacar
                             System.out.println("Escribe la cantidad a extraer:\n");
                             cantidad = Lectura.entero();
                             //Llamo a la funcion ingresarDinero
-                            ingresarDinero(cuenta, cantidad, in, out);
+                            ok = ingresarDinero(cuenta, cantidad, in, out);
+                            comprobarBoolean(ok);
                             break;
                         case 4:
                             //Pido la cantidad a ingresar 
@@ -66,12 +76,18 @@ public class Cajero {
                             //Pido la cuenta a la que ingresar el dinero
                             cuenta2 = Lectura.entero();
                             //Llamo a la funcion transferirDinero
-                            tranferirDinero(cuenta, cuenta2, cantidad, in, out);
+                            ok = tranferirDinero(cuenta, cuenta2, cantidad, in, out);
+                            comprobarBoolean(ok);
                             break;
                         case 5:
                             //Pido el numero de cuenta y compruebo que existe
                             cuenta = Lectura.entero();
-                            buscarCuenta(cuenta, in, out);
+                            ok = buscarCuenta(cuenta, in, out);
+                            while(ok==false){
+                                System.out.println("Escriba el numero de cuenta:\n");
+                                cuenta = Lectura.entero();
+                                ok = buscarCuenta(cuenta, in, out);
+                            }
                             break;
                         case 0:
                             System.out.println("\nMuchas gracias\nQue tenga un buen dia\n");
@@ -126,21 +142,25 @@ public class Cajero {
     
     /*BLOQUEO DE CUENTA*/
     
-    private static void bloquearCuenta(int cuenta, DataInputStream in, DataOutputStream out) throws IOException{
+    private static boolean bloquearCuenta(int cuenta, DataInputStream in, DataOutputStream out) throws IOException{
         pasarDatos(3,cuenta,out);
-        boolean result = in.readBoolean();
-        if(result == false){
+        int result = in.readInt();
+        if(result != 1){
             System.out.println("Error del servidor\n");
+            return false;
         }
+        return true;
     }
     /*DESBLOQUEO DE CUENTA*/
     
-    private static void desbloquearCuenta(int cuenta,DataInputStream in, DataOutputStream out) throws IOException{
+    private static boolean desbloquearCuenta(int cuenta,DataInputStream in, DataOutputStream out) throws IOException{
         pasarDatos(4,cuenta,out);
-        boolean result = in.readBoolean();
-        if(result == false){
+        int result = in.readInt();
+        if(result != 1){
             System.out.println("Error del servidor\n");
+            return false;
         }
+        return true;
     }
 
     /*FUNCIONES DEL MENU*/
@@ -153,10 +173,10 @@ public class Cajero {
         //Guardo los datos recibidos en variables
         String data = in.readUTF();
         String[] datos =data.split(";");
-        int saldo = Integer.parseInt(datos[0]);
-        boolean result = Boolean.valueOf(datos[1]);
+        int result = Integer.parseInt(datos[0]);
+        int saldo = Integer.parseInt(datos[1]);
         //Hago la comprobacion de que el saldo se ha podido comprobar correctamente
-        if (result==true){
+        if (result==0){
            //Si se ha podido comprobar muestro el saldo y devuelvo verdadero
             System.out.println("Saldo actual: "+saldo+"/n");
             return true;
@@ -170,34 +190,43 @@ public class Cajero {
     
     //Sacar dinero de la cuenta
     private static boolean sacarDinero(int cuenta, int cantidad, DataInputStream in, DataOutputStream out) throws IOException{
+        Boolean ok, ok2;
         //Llamo a la funcion pasarDatos
         pasarDatos(1,cuenta,out);
         //Guardo el dato recibido en cantidadCuenta
         String data = in.readUTF();
         String[] datos =data.split(";");
-        int cantidadCuenta = Integer.parseInt(datos[0]);
-        boolean result = Boolean.valueOf(datos[1]);
-        if(result == false){
+        int result = Integer.parseInt(datos[0]);
+        int cantidadCuenta = Integer.parseInt(datos[1]);
+        if(result != 0){
             System.out.println("Error del servidor\n");
-            return result;
+            return false;
         }else{
             //Compruebo que la cantidad total es mayor que 0
-            if((cantidadCuenta-cantidad)>0){
-                bloquearCuenta(cuenta, in, out);
-                //Si es mayor que 0 llamo a la funcion pasarDatos y envio los datos al servidor
-                pasarDatos(2, cuenta, cantidadCuenta-cantidad, out);
-                desbloquearCuenta(cuenta, in, out);
-                return true;
+            if((cantidadCuenta-cantidad)>0){ //Si es mayor que 0 llamo a la funcion pasarDatos y envio los datos al servidor
+                ok = bloquearCuenta(cuenta, in, out);
+                if(ok==true){
+                   pasarDatos(2, cuenta, cantidadCuenta-cantidad, out);
+                   ok2 = desbloquearCuenta(cuenta, in, out);
+                   if(ok2!=true){
+                       System.out.println("Error en el servidor.\n");
+                   }
+                   return ok2;
+                }
             }else{
                 //Si es menor que 0 muestro un mensaje de error y pregunto si quiere continuar con la operacion
                 System.out.println("Saldo insuficiente, ¿desea realizar la operacion?(1/0)");
                 boolean confirmacion = Lectura.booleanoNumerico();
                 if(confirmacion == true){
                     //Si hay confirmacion paso los datos
-                    bloquearCuenta(cuenta,in,out);
-                    pasarDatos(2, cuenta, cantidadCuenta-cantidad, out);
-                    desbloquearCuenta(cuenta,in,out);
-                    return true;
+                    ok = bloquearCuenta(cuenta, in, out);
+                    if(ok==true){
+                        pasarDatos(2, cuenta, cantidadCuenta-cantidad, out);
+                        ok2 = desbloquearCuenta(cuenta, in, out);
+                        if(ok2!=true){
+                            System.out.println("Error en el servidor.\n");
+                        }
+                   return ok2;
                 }else{
                     //Sino muestro un mensaje
                     System.out.println("Operacion carcelada con exito");
@@ -206,19 +235,22 @@ public class Cajero {
             }
         }
     }
+    return false;
+}
     
     //Ingresar dinero a la cuenta
     private static boolean ingresarDinero(int cuenta, int cantidad, DataInputStream in, DataOutputStream out) throws IOException{
+        boolean ok,ok2,ok3;
         //Llamo a la funcion pasarDatos
         pasarDatos(1,cuenta,out);
         //Guardo el dato recibido en cantidadCuenta
         String data = in.readUTF();
         String[] datos =data.split(";");
-        int cantidadCuenta = Integer.parseInt(datos[0]);
-        boolean result = Boolean.valueOf(datos[1]);
-        if(result == false){
+        int result = Integer.parseInt(datos[0]);
+        int cantidadCuenta = Integer.parseInt(datos[1]);
+        if(result != 0){
             System.out.println("Error del servidor\n");
-            return result;
+            return false;
         }else{
             //Si el total es mayor que cero 
             if((cantidadCuenta+cantidad)>0){
@@ -227,15 +259,23 @@ public class Cajero {
                 boolean confirmacion = Lectura.booleanoNumerico();
                 //Si se confirma
                 if(confirmacion == true){
-                    bloquearCuenta(cuenta,in,out);
-                    //Llamo a la funcion pasarDatos
-                    pasarDatos(3, cuenta, cantidadCuenta+cantidad, out);
-                    desbloquearCuenta(cuenta,in,out);
-                    return true;
+                    ok = bloquearCuenta(cuenta,in,out);
+                    if(ok==true){
+                        //Llamo a la funcion pasarDatos
+                        pasarDatos(3, cuenta, cantidadCuenta+cantidad, out);
+                        ok2 = desbloquearCuenta(cuenta,in,out);
+                        if(ok2!=true){
+                             System.out.print("Error al realizar la operacion.\n");
+                        }
+                        return ok2;
+                    }else{
+                        System.out.print("Error al realizar la operacion.\n");
+                        return ok;
+                    }
                 }else{
                     //Sino se confirmo devuelvo un mensaje de error
                     System.out.println("Operacion carcelada\n");
-                    return false;
+                    return confirmacion;
                 }
             }else{
                 //Sino muestro un mensaje de error
@@ -248,20 +288,30 @@ public class Cajero {
     //Transferir dinero a otra cuenta
     private static boolean tranferirDinero(int cuenta, int cuenta2, int cantidad, DataInputStream in, DataOutputStream out) throws IOException{
         //Guardo el dato recibido en cantidadCuenta
+        boolean ok, ok2;
+        pasarDatos(1,cuenta,out);
         String data = in.readUTF();
         String[] datos =data.split(";");
-        int cantidadCuenta = Integer.parseInt(datos[0]);
-        boolean result = Boolean.valueOf(datos[1]);
-        if(result == false){
+        int cantidadCuenta = Integer.parseInt(datos[1]);
+        int result = Integer.parseInt(datos[0]);
+        if(result != 0){
             System.out.println("Error del servidor\n");
-            return result;
+            return false;
         }else{
             //Si la cantidad total es mayor que 0
             if((cantidadCuenta-cantidad)>0){
                 //Saco el dinero de la primera cuenta y lo ingreso en la segunda cuenta
-                sacarDinero(cuenta, cantidad, in, out);
-                ingresarDinero(cuenta2, cantidad, in, out);
-                return true;
+                ok = sacarDinero(cuenta, cantidad, in, out);
+                if(ok == true){
+                    ok2 = ingresarDinero(cuenta2, cantidad, in, out);
+                    if(ok2 != true){
+                        System.out.println("Error, no se ha podido llevar a cabo la operacion\n");
+                    }
+                    return ok2;
+                }else{
+                    System.out.println("Error, no se ha podido llevar a cabo la operacion\n");
+                    return ok;
+                }
             }else{
                 //Devuelvo un mensaje de error
                 System.out.println("Operacion invalida, saldo insuficiente");
@@ -269,6 +319,13 @@ public class Cajero {
             }
         }
     }
-    
+    private static void comprobarBoolean(Boolean ok){
+        if(ok==true){
+            System.out.println("Operacion realizada con exito.\n");
+        }else{
+            System.out.println("Fallo en la operacion.\n");
+        }
+    }
 }
+
 
